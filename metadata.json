@@ -1,0 +1,7 @@
+{
+  "name": "AI Snake Master",
+  "description": "A classic Snake game enhanced with Gemini 2.5 Flash Image for theme generation/editing and Veo 3.1 for high-quality video animations of your gameplay.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
