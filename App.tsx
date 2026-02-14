@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import SnakeGame from './components/SnakeGame';
-import { GameState, GameTheme, AIStatus } from './types';
+import { GameState, GameTheme, AIStatus, Direction } from './types';
 import { GeminiService } from './services/geminiService';
 
 const App: React.FC = () => {
@@ -9,6 +9,7 @@ const App: React.FC = () => {
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [lives, setLives] = useState(3);
+  const [isAutoPlay, setIsAutoPlay] = useState(false);
   const [theme, setTheme] = useState<GameTheme>({
     backgroundUrl: null,
     snakeColor: '#00ffcc',
@@ -26,16 +27,20 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkKey = async () => {
       // @ts-ignore
-      const ok = await window.aistudio.hasSelectedApiKey();
-      setHasApiKey(ok);
+      if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
+        const ok = await window.aistudio.hasSelectedApiKey();
+        setHasApiKey(ok);
+      }
     };
     checkKey();
   }, []);
 
   const handleSelectKey = async () => {
     // @ts-ignore
-    await window.aistudio.openSelectKey();
-    setHasApiKey(true);
+    if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+      await window.aistudio.openSelectKey();
+      setHasApiKey(true);
+    }
   };
 
   const startGame = () => {
@@ -82,7 +87,9 @@ const App: React.FC = () => {
             AI 幻影蛇靈
           </h1>
           <p className="text-cyan-600/80 font-mono mt-3 uppercase tracking-[0.3em] text-[10px]">
-            System.Core.v3.5 // <span className="text-purple-500 animate-pulse">Ultra Slow Processing Mode</span>
+            System.Core.v4.0 // <span className={isAutoPlay ? "text-purple-500 animate-pulse" : "text-emerald-500"}>
+              {isAutoPlay ? "Neural Link Active" : "Manual Command Mode"}
+            </span>
           </p>
         </div>
         
@@ -109,7 +116,6 @@ const App: React.FC = () => {
       <main className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 flex flex-col gap-6">
           <div className="relative group overflow-hidden rounded-3xl border border-slate-800 shadow-[0_0_80px_rgba(0,0,0,0.8)] bg-black aspect-square md:aspect-video flex items-center justify-center">
-            {/* 數位噪點與網格特效疊層 */}
             <div className="absolute inset-0 pointer-events-none opacity-20 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.4)_50%),linear-gradient(90deg,rgba(0,255,255,0.05),rgba(255,0,255,0.02),rgba(0,255,255,0.05))] bg-[length:100%_3px,4px_100%] z-20"></div>
             
             <SnakeGame 
@@ -117,6 +123,7 @@ const App: React.FC = () => {
               setGameState={setGameState} 
               theme={theme} 
               lives={lives}
+              isAutoPlay={isAutoPlay}
               onLifeLost={() => setLives(prev => prev - 1)}
               onScoreUpdate={(s) => {
                 setScore(s);
@@ -131,20 +138,29 @@ const App: React.FC = () => {
                   <div className="absolute inset-0 border-4 border-cyan-500/20 rounded-full animate-[ping_3s_linear_infinite]"></div>
                   <div className="absolute inset-0 border border-cyan-500/50 rounded-full animate-[spin_10s_linear_infinite]"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <i className="fa-solid fa-atom text-6xl text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]"></i>
+                    <i className="fa-solid fa-brain text-6xl text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]"></i>
                   </div>
                 </div>
                 <h2 className="text-5xl font-orbitron mb-4 tracking-[0.3em] text-white">啟動核心協議</h2>
                 <p className="text-slate-500 mb-10 font-mono text-sm max-w-md leading-relaxed">
-                  系統偵測到：極致慢速模式 (600ms) 已就緒。<br/>玩家擁有 3 次數據回溯機會。
+                  系統偵測到：核心導航模組已就緒。<br/>您可以選擇手動操作或啟動「神經連結」自動執行。
                 </p>
-                <button 
-                  onClick={startGame}
-                  className="group relative px-16 py-5 bg-transparent overflow-hidden border-2 border-cyan-500 text-cyan-400 font-bold rounded-full transition-all hover:text-white hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.2)]"
-                >
-                  <div className="absolute inset-0 w-0 bg-cyan-500 transition-all duration-300 group-hover:w-full -z-10"></div>
-                  INITIALIZE SYSTEM
-                </button>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={startGame}
+                    className="group relative px-10 py-5 bg-transparent overflow-hidden border-2 border-cyan-500 text-cyan-400 font-bold rounded-full transition-all hover:text-white hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(6,182,212,0.2)]"
+                  >
+                    <div className="absolute inset-0 w-0 bg-cyan-500 transition-all duration-300 group-hover:w-full -z-10"></div>
+                    MANUAL BOOT
+                  </button>
+                  <button 
+                    onClick={() => { setIsAutoPlay(true); startGame(); }}
+                    className="group relative px-10 py-5 bg-transparent overflow-hidden border-2 border-purple-500 text-purple-400 font-bold rounded-full transition-all hover:text-white hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(168,85,247,0.2)]"
+                  >
+                    <div className="absolute inset-0 w-0 bg-purple-500 transition-all duration-300 group-hover:w-full -z-10"></div>
+                    NEURAL LINK (AI)
+                  </button>
+                </div>
               </div>
             )}
 
@@ -168,22 +184,42 @@ const App: React.FC = () => {
 
           <div className="bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-md flex flex-wrap justify-between items-center gap-4">
             <div className="flex gap-8 text-[11px] font-mono tracking-widest text-slate-400">
-              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> 引擎狀態: 優化中</span>
-              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span> 延遲: 600MS</span>
-              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span> 模型: Gemini 2.5 Flash</span>
+              <span className="flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 ${isAutoPlay ? 'bg-purple-500 animate-ping' : 'bg-emerald-500'} rounded-full`}></span> 
+                模式: {isAutoPlay ? 'AI 自動執行' : '手動執行'}
+              </span>
+              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></span> 延遲: {isAutoPlay ? '100MS' : '600MS'}</span>
+              <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span> 引擎: BFS Pathfinding</span>
             </div>
-            <div className="text-cyan-500/50 text-[10px] font-orbitron animate-pulse">DATA_SYNC_ACTIVE_0925</div>
+            <div className="text-cyan-500/50 text-[10px] font-orbitron animate-pulse">AUTOPILOT_STATUS: {isAutoPlay ? 'ONLINE' : 'OFFLINE'}</div>
           </div>
         </div>
 
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="bg-slate-900/80 p-8 rounded-3xl border border-slate-800 h-full flex flex-col shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
-              <i className="fa-solid fa-microchip text-9xl"></i>
+            <h3 className="text-xs font-orbitron mb-8 text-purple-400 flex items-center gap-4 uppercase tracking-[0.4em]">
+              <span className="w-3 h-3 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.8)]"></span> AI 自動化控制
+            </h3>
+            
+            <div className="space-y-4 mb-10">
+              <button 
+                onClick={() => setIsAutoPlay(!isAutoPlay)}
+                className={`w-full py-5 rounded-xl font-bold transition-all flex items-center justify-center gap-3 border-2 ${
+                  isAutoPlay 
+                  ? 'bg-purple-600/20 border-purple-500 text-purple-400' 
+                  : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-purple-500/50'
+                }`}
+              >
+                <i className={`fa-solid ${isAutoPlay ? 'fa-toggle-on text-xl' : 'fa-toggle-off text-xl'}`}></i>
+                {isAutoPlay ? '關閉神經連結' : '啟動神經連結'}
+              </button>
+              <p className="text-[10px] text-slate-500 font-mono leading-relaxed px-2">
+                * 啟動後 AI 將自動接管移動控制，並以 100ms 的高速進行路徑運算。
+              </p>
             </div>
 
             <h3 className="text-xs font-orbitron mb-8 text-cyan-400 flex items-center gap-4 uppercase tracking-[0.4em]">
-              <span className="w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]"></span> AI 空間定製
+              <span className="w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.8)]"></span> 空間定製
             </h3>
             
             <div className="space-y-6 mb-10">
@@ -202,60 +238,29 @@ const App: React.FC = () => {
                 disabled={aiStatus.loading || !prompt}
                 className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-700 disabled:opacity-30 rounded-xl font-bold text-white hover:from-cyan-500 hover:to-blue-600 transition-all shadow-lg active:scale-[0.98]"
               >
-                {aiStatus.loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <i className="fa-solid fa-spinner animate-spin"></i> 空間編碼中...
-                  </span>
-                ) : '重塑數位空間'}
+                {aiStatus.loading ? '空間編碼中...' : '重塑數位空間'}
               </button>
             </div>
 
-            <h3 className="text-xs font-orbitron mb-8 text-purple-400 flex items-center gap-4 uppercase tracking-[0.4em]">
-              <span className="w-3 h-3 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.8)]"></span> VEO 影像渲染
-            </h3>
-            
-            <div className="flex-1 flex flex-col min-h-[250px]">
+            <div className="flex-1 flex flex-col min-h-[200px]">
               {generatedVideo ? (
                 <div className="rounded-2xl overflow-hidden bg-black border border-purple-900/40 shadow-2xl">
                   <video src={generatedVideo} controls autoPlay loop className="w-full" />
                 </div>
               ) : (
                 <div className="flex-1 border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center p-8 text-center bg-slate-950/40 transition-colors hover:border-slate-700">
-                  <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mb-6">
-                    <i className="fa-solid fa-film text-slate-700 text-2xl"></i>
+                  <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center mb-4">
+                    <i className="fa-solid fa-film text-slate-700"></i>
                   </div>
-                  <p className="text-slate-600 text-[10px] leading-relaxed font-mono tracking-widest">
-                    等待高分紀錄數據...<br/>解鎖後將透過 VEO 3.1 生成專屬動畫
+                  <p className="text-slate-600 text-[9px] font-mono tracking-widest uppercase">
+                    等待 VEO 渲染影像
                   </p>
                 </div>
-              )}
-              
-              {!hasApiKey && (
-                <button 
-                  onClick={handleSelectKey}
-                  className="mt-6 w-full py-3 bg-slate-950 border border-slate-800 text-slate-500 rounded-xl text-[10px] font-orbitron tracking-widest hover:text-cyan-500 hover:border-cyan-500/30 transition-all"
-                >
-                  <i className="fa-solid fa-key mr-2"></i> VERIFY API ACCESS
-                </button>
               )}
             </div>
           </div>
         </div>
       </main>
-
-      <footer className="mt-20 w-full max-w-7xl py-12 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center gap-8 text-slate-600 text-[10px] font-mono tracking-[0.2em]">
-        <div className="flex flex-col gap-2">
-          <p>&copy; 2025 PHANTOM SNAKE // CORE_V3.5</p>
-          <p className="text-slate-800 font-sans">Developed for High-Precision Interaction</p>
-        </div>
-        <div className="flex gap-10 items-center">
-          <a href="#" className="hover:text-cyan-400 transition-colors uppercase">Security_Protocol</a>
-          <a href="#" className="hover:text-cyan-400 transition-colors uppercase">Deep_Link</a>
-          <a href="https://ai.google.dev/gemini-api/docs/billing" className="px-5 py-2 bg-slate-900 rounded-full border border-slate-800 hover:text-cyan-400 hover:border-cyan-500/50 transition-all" target="_blank" rel="noopener">
-            BILLING_INFO
-          </a>
-        </div>
-      </footer>
     </div>
   );
 };
